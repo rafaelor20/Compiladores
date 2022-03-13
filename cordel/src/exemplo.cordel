@@ -1,0 +1,31 @@
+{
+Exemplo de código em Cordel. 
+Autora: profa. Beatriz
+}
+
+arrume real assim: soma (real a | real b)  
+inicio	
+    mande de volta a + b;
+fim
+   
+
+#função principal do programa
+
+arrume nada assim: principal() 
+inicio
+
+    ruma de inteiro[5] numeros;
+    inteiro i, n;
+    
+    espie (n);   
+    i := 0;
+    enquanto (i<5)
+    inicio
+       numeros[i] := soma (i | n); 
+       i := i+1;
+    fim
+    
+    arrodeie (i:=0; i<5; i:=i+1)
+       amostre (numeros[i]); # o que o programa mostra aqui?
+    
+fim
