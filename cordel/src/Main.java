@@ -13,7 +13,7 @@ public class Main
     new Parser(
     new Lexer(
     new PushbackReader(  
-    new FileReader(arquivo), 1024))); 
+    new FileReader(args[0]), 1024))); 
    
    Start tree = p.parse();
 
