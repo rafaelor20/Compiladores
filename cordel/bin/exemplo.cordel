@@ -1,5 +1,5 @@
 {
-Exemplo de cÃ³digo em Cordel. 
+Exemplo de código em Cordel. 
 Autora: profa. Beatriz
 }
 
@@ -9,7 +9,7 @@ inicio
 fim
    
 
-#funÃ§Ã£o principal do programa
+#função principal do programa
 
 arrume nada assim: principal() 
 inicio
