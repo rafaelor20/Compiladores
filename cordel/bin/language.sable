@@ -1,23 +1,210 @@
 Package cordel;
 
-Helpers
- digito = ['0' .. '9'];
- espaco = ' ';
- rc = 13;
- nl = 10;
+Helpers                            // HELPERS //
+ tudo = [0 .. 0xFFFFF];
+ letras_min = ['a' .. 'z'];
+ letras_mai = ['A' .. 'Z'];
+ letra = letras_min | letras_mai;
+ num = ['0' .. '9'];
+
+ tab = 9;
+ cr = 13;
+ ln = 10;
+ fdl = cr ln | cr | ln;
  
-Tokens
- numero = digito+;
- soma = '+';
+ em_branco = (' ' | tab | fdl)+;
+ nao_underline = [tudo - '_'];
+ nao_cr_ln = [tudo - [cr + ln]];
+ nao_chaves = [tudo - '}'];
+ 
+ comentario_peq = '#' nao_cr_ln* fdl;
+ comentario_long = '{' + (nao_cr_ln*|nao_chaves*) + '}';
+ comentario = comentario_peq | comentario_long;
+ 
+ id_part = num | letras_mai | letras_min | '_';
+ id_total = letra id_part*;  
+ 
+ int_nums = num+;
+ real_nums = num+ ',' num+;
+ 
+ decl_caractere = ''' nao_cr_ln ''' | ''' '\' letras_min ''';
+ 
+ decl_caractere_vetor = '"' nao_cr_ln* '"';
+ 
+Tokens                             // TOKENS //
+ em_branco = em_branco;
+ comentario = comentario;
+ 
+		//--Tipos primitivos--//
+ caractere = decl_caractere;
+ caractere_vetor = decl_caractere_vetor;
+ numero_inteiro = int_nums;
+ numero_real = real_nums;
+ 
+ tipo_caractere = 'caractere';
+ tipo_inteiro = 'inteiro';
+ tipo_real = 'real';
+ tipo_bool = 'booleano';
+
+ bool_sim = 'sim';
+ bool_nao = 'nao';
+
+		//--Vetores--//
+ ruma = 'ruma';
+ de = 'de';
+ 
+		//--Blocos--//
+ bloco_inicio = 'inicio';
+ bloco_fim = 'fim';
+ 
+ 		//--Estruturas de controle--//
+ arrodeie = 'arrodeie';
+ enquanto = 'enquanto';
+ repita = 'repita';
+ se = 'se';
+ senao = 'senao';
+ 	
+		//--Subrotinas--//
+ arrume = 'arrume';
+ assim = 'assim';
+ mande = 'mande'; //token, de = 'de', já existe
+ volta = 'volta';    
+ nada = 'nada';
+ 
+ 		//--Operadores aritméticos--//
+ mais = '+';
  menos = '-';
- mult = '*';
- div = '/';
- mod = '%';
- par_esq = '(';
- par_dir = ')';
- vazio = (espaco | rc | nl)+;
+ multiplica = '*';
+ divide = '/';                  
 
+		//--Operadores relacionais--//
+ maior_que = '>';
+ menor_que = '<';
+ maior_igual = '>=';
+ menor_igual = '<=';
+ igual = '=';                   
 
+ 		//--Operadores booleanos--//
+ nao_op = '!';
+ e = 'e';
+ ou = 'ou';   	                   
+
+		//--Símbolos--//
+ e_col = '[';
+ d_col = ']';
+ e_par = '(';
+ d_par = ')';
+ e_chv =  '{';
+ d_chv =  '}';
+ virgula = ',';
+ dois_pontos = ':';
+ ponto_virgula = ';';
+ recebe = ':=';
+ e_parametro = '|';
+ 
+ 
+ id = id_total; // Tudo que não for token e puder ser id será id
+ 
 Ignored Tokens
- vazio;
+ em_branco,
+ comentario;
 
+Productions                        // PRODUCTIONS //
+ programa = dec_variavel* dec_funcao*;
+ 
+ dec_variavel = tipo lista_nomes ponto_virgula; //<<<<<< SEM ATRIBUIÇÃO ?
+ 
+ lista_nomes = id id_aux*;
+ 
+ id_aux = virgula id;
+ 
+ tipo = {tipo_base} tipo_base 
+      | {tipo_ruma} ruma de tipo_base e_col exp d_col;
+ 
+ tipo_base = {tipo_inteiro} tipo_inteiro
+ 		   | {tipo_caractere} tipo_caractere 
+ 		   | {tipo_real} tipo_real 
+ 		   | {tipo_bool} tipo_bool;
+ 
+ dec_funcao = arrume tipo_retorno assim dois_pontos id e_par parametros d_par bloco;
+ 
+ tipo_retorno = {tipo} tipo 
+ 			  | {nada} nada;
+ 
+ parametros = parametros_aux1?;  
+ 
+ parametros_aux1 = parametro parametros_aux2*;
+ 
+ parametros_aux2 =  e_parametro parametro;
+ 
+ parametro = tipo id;
+ 
+ bloco = bloco_inicio dec_variavel* comando* bloco_fim;
+ 
+ comando = {open_statement} open_statement
+         | {closed_statement} closed_statement;
+
+ open_statement = {se_simples} se e_par exp d_par simple_statement
+                | {se_aberto} se e_par exp d_par open_statement
+                | {se_senao_aberto} se e_par exp d_par closed_statement senao open_statement
+                | {comando_enquanto_aberto} enquanto e_par exp d_par repita open_statement
+                | {comando_arrodeie_aberto} arrodeie e_par [esq1]:lista_atrib [esq]:ponto_virgula exp [dir]:ponto_virgula [dir1]:lista_atrib d_par open_statement;
+
+ closed_statement = simple_statement
+                  | {se_fechado} se e_par exp d_par [left]:closed_statement senao [right]:closed_statement
+                  | {comando_enquanto_fechado} enquanto e_par exp d_par repita closed_statement
+                  | {comando_arrodeie_fechado} arrodeie e_par [esq1]:lista_atrib [esq]:ponto_virgula exp [dir]:ponto_virgula [dir1]:lista_atrib d_par closed_statement;
+
+ simple_statement = {comando_recebe} atrib ponto_virgula
+ 				  | {comando_mande} mande de volta exp ponto_virgula
+                  | {comando_bloco} bloco
+                  | {comando_chamada} chamada ponto_virgula;
+ 
+ atrib = var recebe exp;
+ 
+ lista_atrib = atrib atrib_aux*;
+ 
+ atrib_aux = virgula atrib;
+ 
+ var = {var_id} id
+     | {var_exp} var e_col exp d_col;
+     
+ exp = {exp_igual} exp igual op    //<<<<<<<<<< INTEIRO | REAL | CARACTERE | BOOLEANO | STRING
+	 | {exp_maior_igual} exp maior_igual op
+	 | {exp_menor_igual} exp menor_igual op	 
+	 | {exp_menor_que} exp menor_que op 
+     | {exp_maior_que} exp maior_que op
+	 | {exp_nao} nao_op op 
+	 | {exp_e} exp e op
+	 | {exp_ou} exp ou op 
+	 | {op} op;
+	
+ op = {factor} factor
+ 	| {mais} op mais factor 
+ 	| {menos} op menos factor;
+ 
+ factor = {term} term
+ 		| {exp_mult_term} factor multiplica term
+ 		| {exp_div_term} factor divide term;
+ 		
+ term = {var} var 
+      | {variavel} variavel
+      | {neg_inteiro} e_par menos numero_inteiro d_par
+      | {neg_real} e_par menos numero_real d_par
+	  | {exp_prioridade} e_par exp d_par
+ 	  | {exp_chamada} chamada;
+ 
+ variavel = {numero_inteiro} numero_inteiro
+  		  |	{numero_real} numero_real
+		  | {caractere} caractere
+		  | {bool_sim} bool_sim 
+		  | {bool_nao} bool_nao
+		  | {string} caractere_vetor;
+		  
+ chamada = id e_par lista_exp d_par;
+ 
+ lista_exp = lista_aux1?;
+ 
+ lista_aux1 = exp lista_aux2*;
+ 
+ lista_aux2 = e_parametro exp;
